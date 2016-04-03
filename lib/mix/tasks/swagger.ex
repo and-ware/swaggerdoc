@@ -66,6 +66,7 @@ defmodule Mix.Tasks.Swagger do
         Mix.shell.error "Failed to generate Swagger documentation:  Caught #{inspect what} with #{inspect value}"
         Mix.shell.error Exception.format_stacktrace(System.stacktrace)
     end
+    
   end
 
   @doc """
