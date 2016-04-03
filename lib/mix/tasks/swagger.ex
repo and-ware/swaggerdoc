@@ -5,15 +5,12 @@ defmodule Mix.Tasks.Swagger do
 
   @moduledoc """
   To use swaggerdoc with your projects, edit your mix.exs file and add it as a dependency:
-
   ```elixir
   defp deps do
     [{:swaggerdoc, "~> 0.0.1"}]
   end
   ```
-
   To execute the Mix task, simply type `mix swagger`:
-
   ```elixir
   hello_user$ mix swagger
   Generating Swagger documentation...
@@ -22,14 +19,11 @@ defmodule Mix.Tasks.Swagger do
   Writing JSON to file...
   Finished generating Swagger documentation!
   ```
-
   To view the generated Swagger in [swagger-ui](https://github.com/swagger-api/swagger-ui):
-
   * In a temp folder, execute a git clone of https://github.com/swagger-api/swagger-ui.git
   * In the browser of your choice, open the file *temp folder*/swagger-ui/dist/index.html
   * In the JSON API input box at the top of the page, paste in the link to the JSON
   * Hit the 'Explore' button
-
   For a complete example, please see the [examples](https://github.com/OpenAperture/swaggerdoc/tree/master/examples) section.
   """
 
@@ -123,48 +117,43 @@ defmodule Mix.Tasks.Swagger do
   def add_routes(nil, swagger), do: swagger
   def add_routes([], swagger), do: swagger
   def add_routes([route | remaining_routes], swagger) do
-    pipe_through = Application.get_env(:swaggerdoc, :pipe_through, nil)
-    if pipe_through && route.pipe_through != pipe_through do
-      add_routes(remaining_routes, swagger)
-    else
-      swagger_path = path_from_route(String.split(route.path, "/"), nil)
+    swagger_path = path_from_route(String.split(route.path, "/"), nil)
 
-      path = swagger[:paths][swagger_path]
-      if path == nil do
-        path = %{}
-      end
-
-      func_name = "swaggerdoc_#{route.opts}"
-      verb = if route.plug != nil && Keyword.has_key?(route.plug.__info__(:functions), String.to_atom(func_name)) do
-        apply(route.plug, String.to_atom(func_name), [])
-      else
-        parse_default_verb(route.path)
-      end
-
-      response_schema = verb[:response_schema]
-      verb = Map.delete(verb, :response_schema)
-
-      verb_string = String.downcase("#{route.verb}")
-      if verb[:responses] == nil do
-        verb = Map.put(verb, :responses, default_responses(verb_string, response_schema))
-      end
-
-      if verb[:produces] == nil do
-        verb = Map.put(verb, :produces, Application.get_env(:swaggerdoc, :produces, []))
-      end
-
-      if verb[:operationId] == nil do
-        verb = Map.put(verb, :operationId, "#{route.opts}")
-      end
-
-      if verb[:description] == nil do
-        verb = Map.put(verb, :description, "")
-      end
-
-      path = Map.put(path, verb_string, verb)
-      paths = Map.put(swagger[:paths], swagger_path, path)
-      add_routes(remaining_routes, Map.put(swagger, :paths, paths))
+    path = swagger[:paths][swagger_path]
+    if path == nil do
+      path = %{}
     end
+
+    func_name = "swaggerdoc_#{route.opts}"
+    verb = if route.plug != nil && Keyword.has_key?(route.plug.__info__(:functions), String.to_atom(func_name)) do
+      apply(route.plug, String.to_atom(func_name), [])
+    else
+      parse_default_verb(route.path)
+    end
+
+    response_schema = verb[:response_schema]
+    verb = Map.delete(verb, :response_schema)
+
+    verb_string = String.downcase("#{route.verb}")
+    if verb[:responses] == nil do
+      verb = Map.put(verb, :responses, default_responses(verb_string, response_schema))
+    end
+
+    if verb[:produces] == nil do
+      verb = Map.put(verb, :produces, Application.get_env(:swaggerdoc, :produces, []))
+    end
+
+    if verb[:operationId] == nil do
+      verb = Map.put(verb, :operationId, "#{route.opts}")
+    end
+
+    if verb[:description] == nil do
+      verb = Map.put(verb, :description, "")
+    end
+
+    path = Map.put(path, verb_string, verb)
+    paths = Map.put(swagger[:paths], swagger_path, path)
+    add_routes(remaining_routes, Map.put(swagger, :paths, paths))
   end
 
   @doc """
@@ -252,13 +241,6 @@ defmodule Mix.Tasks.Swagger do
       end
 
       module_json = %{"properties" => properties_json}
-
-      if :erlang.function_exported(module, :changeset, 2) do
-        module_struct = module.changeset(module.__struct__, %{})
-        required = required_fields module_struct.errors
-        module_json = Map.put(module_json, "required", required)
-      end
-
       def_json = Map.put(def_json, "#{inspect module}", module_json)
     end
 
@@ -285,12 +267,5 @@ defmodule Mix.Tasks.Swagger do
       :uuid -> %{"type" => "string"}
       _ -> %{"type" => "string"}
     end
-  end
-
-  def required_fields([]), do: []
-
-  def required_fields([head|tail]) do
-    {key, _msg} = head
-    [to_string(key)|required_fields(tail)]
   end
 end
